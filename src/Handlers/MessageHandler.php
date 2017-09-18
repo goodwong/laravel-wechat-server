@@ -2,11 +2,13 @@
 
 namespace Goodwong\LaravelWechatServer\Handlers;
 
+use Illuminate\Support\Facades\Cache;
 use Goodwong\LaravelUser\Entities\User;
 use Goodwong\LaravelWechat\Entities\WechatUser;
 use Goodwong\LaravelUser\Handlers\UserHandler;
 use Goodwong\LaravelWechat\Handlers\WechatHandler;
 use Goodwong\LaravelWechatQrcode\Entities\WechatQrcode;
+use Goodwong\LaravelUserAttribute\Handlers\UserDataHandler;
 
 class MessageHandler
 {
@@ -22,7 +24,7 @@ class MessageHandler
      * 
      * @var WechatQrcode
      */
-    private $wechatQrcode = null;
+    private $qrcode = null;
 
     /**
      * user
@@ -30,6 +32,13 @@ class MessageHandler
      * @var User
      */
     private $user = null;
+
+    /**
+     * context
+     * 
+     * @var string
+     */
+    private $context = null;
 
     /**
      * constructor
@@ -49,7 +58,7 @@ class MessageHandler
     public function serve($message)
     {
         // prepare wechat user
-        $this->loadWechatUser($message->FromUserName);
+        $this->loadWechatUser($message->FromUserName, $message->Event);
 
         // load qrcode
         if (in_array($message->Event, ['subscribe', 'SCAN'])) {
@@ -59,21 +68,31 @@ class MessageHandler
         // load user
         $this->loadUser();
 
+        // set context
+        $this->setContext();
+
+        // record user activities
+        $this->record($message);
+
         // logic
-        return "哈哈";
+        return $this->dispatch($message);
     }
 
     /**
      * load wechat user
      * 
      * @param  string  $openid
+     * @param  string  $event
      * @return void
      */
-    private function loadWechatUser($openid)
+    private function loadWechatUser($openid, $event)
     {
         $wechatUser = WechatUser::where('openid', $openid)->first();
         if (!$wechatUser) {
-            $wechatUser = $this->wechatHandler->fetchByOpenid($openid);
+            $wechatUser = $this->wechatHandler->createByOpenid($openid);
+        }
+        if ($event == 'unsubscribe') {
+            $wechatUser->update(['subscribe' => 0]);
         }
         $this->wechatUser = $wechatUser;
     }
@@ -97,43 +116,128 @@ class MessageHandler
     private function loadUser()
     {
         if ($this->wechatUser->user_id) {
-            $this->user = User::find($this->wechatUser->user_id);
+            $user = User::find($this->wechatUser->user_id);
         } else {
-            $this->user = $this->userHandler->create([
-                'email' => $this->wechatUser->unionid ? $this->wechatUser->unionid . '@wexin_unionid' : $this->wechatUser->openid . "@weixin",
+            $user = $this->userHandler->create([
+                'email' => $this->wechatUser->unionid ? $this->wechatUser->unionid . '@weixin_unionid' : $this->wechatUser->openid . "@weixin",
                 'name' => $this->wechatUser->nickname,
             ]);
-            $this->wechatUser->update(['user_id' => $this->user->id]);
+            $this->wechatUser->update(['user_id' => $user->id]);
         }
+        $this->user = $user;
     }
 
     /**
-     * set user scene
+     * set user context
      * 
      * @return void
      */
-    private function switchScene()
+    private function setContext()
     {
-        //
+        $handler = new UserDataHandler('global');
+        if ($this->qrcode) {
+            $context = $this->qrcode->category_id;
+        } else {
+            $value = $handler->getByCode($this->user->id, 'context');
+            $context = $value ? $value->value : 'direct';
+        }
+        $handler->setByCode($this->user->id, 'context', $context, ['label' => '当前场景']);
+        $this->context = $context;
     }
 
     /**
      * record activity
      * 
+     * @param  object  $message
      * @return void
      */
-    private function record()
+    private function record($message)
     {
-        //
+        $handler = new UserDataHandler($this->context);
+
+        if ($message->Event == 'subscribe') {
+            // 扫码关注
+            if ($this->qrcode) {
+                $handler->addTag($this->user->id, "subscribe", "二维码[{$this->qrcode->name}]",  ['label' => '关注来源', 'group_label' => '互动']);
+                $handler->increase($this->user->id, "qrcode_{$this->qrcode->id}@scan", ['label' => "扫码 [{$this->qrcode->name}]", 'group_label' => '互动']);
+                $handler->setByCode($this->user->id, "time-line", "来自关注 [{$this->qrcode->name}]",  ['label' => "动态", 'mode' => 'append', 'type' => 'textarea', 'group_label' => '互动']);
+            }
+            // 直接关注
+            else {
+                $handler->addTag($this->user->id, "subscribe", "直接关注",  ['label' => '关注来源', 'group_label' => '互动']);
+                $handler->setByCode($this->user->id, "time-line", "直接关注公众号",  ['label' => "动态", 'mode' => 'append', 'type' => 'textarea', 'group_label' => '互动']);
+            }
+            // event(new WechatSubscribed($this->user, $this->qrcode));
+        }
+
+        // 取消关注
+        elseif ($message->Event == 'unsubscribe') {
+            $handler->setByCode($this->user->id, "time-line", "取消关注公众号",  ['label' => "动态", 'mode' => 'append', 'type' => 'textarea', 'group_label' => '互动']);
+            // event(new WechatUnSubscribed($this->user));
+        }
+
+        // 扫码
+        elseif ($message->Event == 'SCAN' && $this->qrcode) {
+            $handler->increase($this->user->id, "qrcode_{$this->qrcode->id}@scan", ['label' => "扫码 [{$this->qrcode->name}]", 'group_label' => '互动']);
+            $handler->setByCode($this->user->id, "time-line", "扫码 [{$this->qrcode->name}]",  ['label' => "动态", 'mode' => 'append', 'type' => 'textarea', 'group_label' => '互动']);
+            // event(new WechatQrcodeScanned($this->user, $this->qrcode));
+        }
+
+        // 点击自定义菜单事件
+        elseif ($message->Event == 'CLICK' || $message->Event == 'VIEW') {
+            $button = $this->findMenuLabel($message);
+            $handler->setByCode($this->user->id, "time-line", "点击菜单 [{$button}]",  ['label' => "动态", 'mode' => 'append', 'type' => 'textarea', 'group_label' => '互动']);
+            // event(new WechatButtonClicked($this->user, $button));
+        }
+    }
+
+    /**
+     * find menu event label
+     * 
+     * @param  object  $message
+     * @return string
+     */
+    private function findMenuLabel($message)
+    {
+        $retry = 1;
+        do {
+            $menu = Cache::remember("wechat:menu", 1440, function () {
+                return data_get(app()->wechat->menu->all(), 'menu.button', []);
+            });
+    
+            $key = $message->EventKey;
+            foreach ($menu as $button) {
+                if (data_get($button, 'url') == $key || data_get($button, 'key') == $key) {
+                    return $button['name'];
+                }
+                if ( ! data_get($button, 'sub_button')) {
+                    continue;
+                }
+                foreach ($button['sub_button'] as $sub_button) {
+                    if (data_get($sub_button, 'url') == $key || data_get($sub_button, 'key') == $key) {
+                        return $sub_button['name'];
+                    }
+                }
+            }
+            if ($retry) {
+                Cache::forget("wechat:menu");
+            }
+        } while ($retry--);
+
+        // fallback
+        return $key;
     }
 
     /**
      * dispatch
      * 
+     * @param  mixed  $message
      * @return  Response
      */
-    private function dispatch()
+    private function dispatch($message)
     {
-        //
+        $class = \App\Http\Controllers\_WechatMessage\DefaultHandler::class;
+        $handler = new $class($this->wechatUser, $this->qrcode, $this->user);
+        return $handler->serve($message);
     }
 }
