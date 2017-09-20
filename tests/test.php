@@ -4,7 +4,7 @@ date_default_timezone_set("Asia/Hong_Kong");
 # 配置信息
 
 // 方式一：若手工配置：
-$webapi = "http://localhost/api/wechat-server";
+$webapi = "http://v2.pinzhu.co/api/wechat-server";
 $token        = 'a90ca5f0e4ce7696e4a57974c8974791';
 $ToUserName   = 'gh_250884bca3c4';
 $FromUserName = 'oGlNawLIWpv8Qx2BLE58-ZNOA5TU';
@@ -31,54 +31,49 @@ $url = $webapi;
 
 // run...
 testSubscribe();
-testCLICK();
-testVIEW();
-testTEXT();
+// testCLICK();
+// testVIEW();
+// testTEXT();
 
 
 // 事件
 function testSubscribe() {
     global $data;
     echo "\n\n============= subscribe ============\n";
-    $xml = xml_make($data + ['MsgType'=>'event', 'Event'=>'subscribe', 'EventKey'=>'qrscene_12']);
-    post($xml);
-    $xml = xml_make($data + ['MsgType'=>'event', 'Event'=>'subscribe', 'EventKey'=>'qrscene_13']);
-    post($xml);
-    $xml = xml_make($data + ['MsgType'=>'event', 'Event'=>'subscribe', 'EventKey'=>'qrscene_14']);
-    post($xml);
+    post(xml_make($data + ['MsgType'=>'event', 'Event'=>'subscribe', 'EventKey'=>'qrscene_11']));
+    // post(xml_make($data + ['MsgType'=>'event', 'Event'=>'subscribe', 'EventKey'=>'qrscene_12']));
+    // post(xml_make($data + ['MsgType'=>'event', 'Event'=>'subscribe', 'EventKey'=>'qrscene_13']));
+    // post(xml_make($data + ['MsgType'=>'event', 'Event'=>'subscribe', 'EventKey'=>'qrscene_14']));
 }
 function testCLICK() {
     global $data;
     echo "\n\n============= CLICK ============\n";
-    $xml = xml_make($data + ['MsgType'=>'event', 'Event'=>'CLICK', 'EventKey'=>'售后服务']);
-    post($xml);
+    post(xml_make($data + ['MsgType'=>'event', 'Event'=>'CLICK', 'EventKey'=>'推荐品住']));
+    post(xml_make($data + ['MsgType'=>'event', 'Event'=>'CLICK', 'EventKey'=>'售后服务']));
 }
 function testVIEW() {
     global $data;
     echo "\n\n============= VIEW ============\n";
-    $xml = xml_make($data + ['MsgType'=>'event', 'Event'=>'VIEW', 'EventKey'=>'https://mp.weixin.qq.com/s?__biz=MzIyNzE0NDk4Ng==&mid=502740752&idx=1&sn=b2c94e373343a419e7c23e0eb734969f&chksm=706633654711ba7316502566638e62c1c7acfb551eb8a202e71781ca6639fd2cef0d302593be&scene=18#rd']);
-    post($xml);
+    post(xml_make($data + ['MsgType'=>'event', 'Event'=>'VIEW', 'EventKey'=>'https://mp.weixin.qq.com/s?__biz=MzIyNzE0NDk4Ng==&mid=502740752&idx=1&sn=b2c94e373343a419e7c23e0eb734969f&chksm=706633654711ba7316502566638e62c1c7acfb551eb8a202e71781ca6639fd2cef0d302593be&scene=18#rd']));
 }
 // 位置坐标
 function testLOCATION() {
     global $data;
     echo "\n\n============= LOCATION ============\n";
-    $xml = xml_make($data + ['MsgType'=>'location', 'Location_X'=>'12.134521', 'Location_Y'=>'113.358803', 'Scale'=>'20', 'Label'=>'位置信息']);
-    post($xml);
+    post(xml_make($data + ['MsgType'=>'location', 'Location_X'=>'12.134521', 'Location_Y'=>'113.358803', 'Scale'=>'20', 'Label'=>'位置信息']));
 }
 // 文本信息
 function testTEXT() {
     global $data;
-    echo "\n\n============= TEXT ============\n";
-    $xml = xml_make($data + ['MsgType'=>'text', 'Content'=>'VIEW_SHOP_LIST']);
-    post($xml);
+    echo "\n============= TEXT ============\n";
+    post(xml_make($data + ['MsgType'=>'text', 'Content'=>'1D0305']));
 }
 
 function post($xml) {
     global $url;
     $res = simple_curl($url, $xml, 'POST');
-    echo "\n\n\t\t【响应】\n";
-    echo formated_xml($res);
+    echo "\t\t【响应】\n";
+    echo formated_xml($res), "\n\n\n";
     // echo "\n\n\t\t【请求】\n";
     // echo formated_xml($xml);
 }
@@ -109,25 +104,26 @@ function testEcho()
   {
     $xml = trim($xml);
     if (!$xml) {
-      return "empty string\n";
+      return "<empty string>\n";
+    }
+    if (!strstr($xml, '<xml')) {
+        return $xml;
     }
 
     $ret = "";
     $raw = preg_replace('|( *)<|i', '<', trim($xml));
-    $ret .= "\n-------------\n";
     try {
       $dom = new DOMDocument;
       $dom->preserveWhiteSpace = FALSE;
       @$dom->loadXML($xml); // $dom->loadXML(preg_replace('|^[^<]*|m', '',$raw));
       $dom->formatOutput = TRUE;
-      $formated = $dom->saveXml();
-      $ret .= "FORMATED:\n" . ($formated);
+      $ret = $dom->saveXml();
     } catch(Exception $e) {
-      // print_r($e);
-      $ret .= "\n";
+      print_r($e);
     }
-    $ret .= "\n-------------\nRAW:\n" . (preg_replace('|(.{100,200})|', '$1...', $raw));
-    $ret .= "\n-------------\n";
+    if (!$ret) {
+      $ret = preg_replace('|(.{100,200})|', '$1...', $raw);
+    }
     return $ret;
   }
 
