@@ -232,12 +232,31 @@ class MessageHandler
      * dispatch
      * 
      * @param  mixed  $message
-     * @return  Response
+     * @return  Response | null
      */
     private function dispatch($message)
     {
-        $class = \App\Http\Controllers\_WechatMessage\DefaultHandler::class;
-        $handler = new $class($this->wechatUser, $this->qrcode, $this->user);
-        return $handler->serve($message);
+        $classes = [
+            "handler-{$this->context}",
+            "handler-default",
+        ];
+        if ($this->qrcode) {
+            array_unshift($classes, "handler-{$this->context}-qrcode-{$this->qrcode->id}");
+        }
+        foreach ($classes AS $class) {
+            $class = '\App\Http\Controllers\_WechatMessage\\' . ucfirst(camel_case($class));
+            if ( ! class_exists($class)) {
+                info('wechat server class missing: ' . $class);
+                continue;
+            }
+            // 有结果直接返回
+            // 没有结果: 继续下一个中间件的调用
+            $handler = new $class($this->context, $this->user, $this->wechatUser, $this->qrcode);
+            $response = $handler->serve($message);
+            if ($response) {
+                return $response;
+            }
+        }
+        return null;
     }
 }
