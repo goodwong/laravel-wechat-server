@@ -1,0 +1,18 @@
+{
+    "name": "goodwong/laravel-wechat-server",
+    "type": "library",
+    "authors": [
+        {
+            "name": "william",
+            "email": "goodwong@foxmail.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Goodwong\\LaravelWechatServer\\": "src/"
+        }
+    },
+    "minimum-stability": "stable",
+    "license": "MIT"
+}
