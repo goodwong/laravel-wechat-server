@@ -30,10 +30,10 @@ $url = $webapi;
 
 
 // run...
-testSubscribe();
+// testSubscribe();
 // testCLICK();
 // testVIEW();
-// testTEXT();
+testTEXT();
 
 
 // 事件
@@ -66,7 +66,7 @@ function testLOCATION() {
 function testTEXT() {
     global $data;
     echo "\n============= TEXT ============\n";
-    post(xml_make($data + ['MsgType'=>'text', 'Content'=>'1D0305']));
+    post(xml_make($data + ['MsgType'=>'text', 'Content'=>'1B102']));
 }
 
 function post($xml) {

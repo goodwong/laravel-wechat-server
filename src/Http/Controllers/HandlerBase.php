@@ -61,9 +61,9 @@ abstract class HandlerBase
     }
 
     /**
-     * message
+     * message with raw
      * 
-     * @param  object  $message
+     * @param  \EasyWeChat\Message\AbstractMessage|string  $message
      * @return object
      */
     protected function message($message) {

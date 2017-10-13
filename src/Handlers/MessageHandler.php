@@ -244,7 +244,8 @@ class MessageHandler
             array_unshift($classes, "handler-{$this->context}-qrcode-{$this->qrcode->id}");
         }
         foreach ($classes AS $class) {
-            $class = '\App\Http\Controllers\_WechatMessage\\' . ucfirst(camel_case($class));
+            $base = env('WECHAT_MESSAGE_HANDLER_NAMESPACE', '\App\Http\Controllers\WechatMessage');
+            $class = $base . '\\' . ucfirst(camel_case($class));
             if ( ! class_exists($class)) {
                 info('wechat server class missing: ' . $class);
                 continue;
