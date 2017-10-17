@@ -134,10 +134,6 @@ function testEcho()
     curl_setopt($ch, CURLOPT_USERAGENT,      'Mozilla/4.0');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-    curl_setopt($ch, CURLOPT_HTTPHEADER,     array('Content-Type: text/plain'));
-    curl_setopt($ch, CURLOPT_USERAGENT,      'Mozilla/4.0');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
     if (strtoupper($method) == 'POST') {
       curl_setopt($ch, CURLOPT_CUSTOMREQUEST,  "POST");
       curl_setopt($ch, CURLOPT_POST,           1 );
