@@ -135,7 +135,7 @@ class MessageHandler
     private function setContext()
     {
         $handler = new UserDataHandler('global');
-        if ($this->qrcode) {
+        if ($this->qrcode && $this->qrcode->category_id !== 'global') {
             $context = $this->qrcode->category_id;
         } else {
             $value = $handler->getByCode($this->user->id, 'context');
@@ -159,7 +159,7 @@ class MessageHandler
             // 扫码关注
             if ($this->qrcode) {
                 $handler->addTag($this->user->id, "subscribe", "二维码[{$this->qrcode->name}]",  ['label' => '关注来源', 'group_label' => '互动']);
-                $handler->increase($this->user->id, "qrcode_{$this->qrcode->id}@scan", ['label' => "扫码 [{$this->qrcode->name}]", 'group_label' => '互动']);
+                (new UserDataHandler($this->qrcode->category_id))->increase($this->user->id, "qrcode_{$this->qrcode->id}@scan", ['label' => "扫码 [{$this->qrcode->name}]", 'group_label' => '互动']);
                 $handler->setByCode($this->user->id, "time-line", "来自关注 [{$this->qrcode->name}]",  ['label' => "动态", 'mode' => 'append', 'type' => 'textarea', 'group_label' => '互动']);
             }
             // 直接关注
@@ -178,7 +178,7 @@ class MessageHandler
 
         // 扫码
         elseif ($message->Event == 'SCAN' && $this->qrcode) {
-            $handler->increase($this->user->id, "qrcode_{$this->qrcode->id}@scan", ['label' => "扫码 [{$this->qrcode->name}]", 'group_label' => '互动']);
+            (new UserDataHandler($this->qrcode->category_id))->increase($this->user->id, "qrcode_{$this->qrcode->id}@scan", ['label' => "扫码 [{$this->qrcode->name}]", 'group_label' => '互动']);
             $handler->setByCode($this->user->id, "time-line", "扫码 [{$this->qrcode->name}]",  ['label' => "动态", 'mode' => 'append', 'type' => 'textarea', 'group_label' => '互动']);
             // event(new WechatQrcodeScanned($this->user, $this->qrcode));
         }
