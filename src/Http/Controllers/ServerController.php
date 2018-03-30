@@ -1,12 +1,12 @@
 <?php
 
-namespace Goodwong\LaravelWechatServer\Http\Controllers;
+namespace Goodwong\WechatServer\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Goodwong\LaravelUser\Entities\User;
-use Goodwong\LaravelWechat\Entities\WechatUser;
-use Goodwong\LaravelWechatQrcode\Entities\WechatQrcode;
-use Goodwong\LaravelWechatServer\Handlers\MessageHandler;
+use Goodwong\User\Entities\User;
+use Goodwong\Wechat\Entities\WechatUser;
+use Goodwong\WechatQrcode\Entities\WechatQrcode;
+use Goodwong\WechatServer\Handlers\MessageHandler;
 use Illuminate\Http\Request;
 
 class ServerController extends Controller

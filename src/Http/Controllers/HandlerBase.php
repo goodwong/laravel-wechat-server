@@ -1,8 +1,8 @@
 <?php
 
-namespace Goodwong\LaravelWechatServer\Http\Controllers;
+namespace Goodwong\WechatServer\Http\Controllers;
 
-use Goodwong\LaravelUserAttribute\Handlers\UserDataHandler;
+use Goodwong\UserAttribute\Handlers\UserDataHandler;
 
 abstract class HandlerBase
 {

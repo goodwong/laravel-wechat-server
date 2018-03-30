@@ -1,6 +1,6 @@
 <?php
 
-namespace Goodwong\LaravelWechatServer;
+namespace Goodwong\WechatServer;
 
 use Illuminate\Support\Facades\Route;
 
@@ -13,7 +13,7 @@ class Router
      */
     public static function server()
     {
-        Route::namespace('Goodwong\LaravelWechatServer\Http\Controllers')->group(function () {
+        Route::namespace('Goodwong\WechatServer\Http\Controllers')->group(function () {
             Route::any('wechat-server', 'ServerController@serve')->name('wechat-server');
         });
     }

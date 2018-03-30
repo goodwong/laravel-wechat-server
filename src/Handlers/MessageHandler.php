@@ -1,14 +1,14 @@
 <?php
 
-namespace Goodwong\LaravelWechatServer\Handlers;
+namespace Goodwong\WechatServer\Handlers;
 
 use Illuminate\Support\Facades\Cache;
-use Goodwong\LaravelUser\Entities\User;
-use Goodwong\LaravelWechat\Entities\WechatUser;
-use Goodwong\LaravelUser\Handlers\UserHandler;
-use Goodwong\LaravelWechat\Handlers\WechatHandler;
-use Goodwong\LaravelWechatQrcode\Entities\WechatQrcode;
-use Goodwong\LaravelUserAttribute\Handlers\UserDataHandler;
+use Goodwong\User\Entities\User;
+use Goodwong\Wechat\Entities\WechatUser;
+use Goodwong\User\Handlers\UserHandler;
+use Goodwong\Wechat\Handlers\WechatHandler;
+use Goodwong\WechatQrcode\Entities\WechatQrcode;
+use Goodwong\UserAttribute\Handlers\UserDataHandler;
 
 class MessageHandler
 {

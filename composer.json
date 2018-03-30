@@ -10,7 +10,7 @@
     "require": {},
     "autoload": {
         "psr-4": {
-            "Goodwong\\LaravelWechatServer\\": "src/"
+            "Goodwong\\WechatServer\\": "src/"
         }
     },
     "minimum-stability": "stable",
