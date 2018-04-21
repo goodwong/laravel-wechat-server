@@ -105,7 +105,9 @@ class MessageHandler
      */
     private function loadQrcode($id)
     {
-        $this->qrcode = WechatQrcode::find($id);
+        if ($id) {
+            $this->qrcode = WechatQrcode::find($id);
+        }
     }
 
     /**
